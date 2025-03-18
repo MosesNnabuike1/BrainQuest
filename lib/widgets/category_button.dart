@@ -20,12 +20,12 @@ class CategoryButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
       ),
-      icon: Icon(icon, color: Colors.white, size: 30),
+      icon: Icon(icon, color: Colors.white, size: 20),
       label: Text(
         category,
         style: const TextStyle(

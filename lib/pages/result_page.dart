@@ -40,7 +40,7 @@ class ResultPage extends StatelessWidget {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const CategoryPage()),
+                        builder: (context) => const CategoryPage(name: 'Home')),
                     (Route<dynamic> route) => false,
                   );
                 },

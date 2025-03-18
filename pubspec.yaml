@@ -2,7 +2,7 @@ name: my_quiz_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.3+2006
 
 environment:
   sdk: ^3.5.0
@@ -13,11 +13,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   percent_indicator: ^4.2.2
   http: ^1.2.2 # Or the latest version of the package
+  auto_size_text: ^3.0.0
+  html_unescape: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.9.2
 
 flutter:
   uses-material-design: true
@@ -26,3 +29,15 @@ flutter:
   assets:
     - lib/assets/category_banner.jpg
     - lib/assets/sound.mp3
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: fonts/poppins/Poppins-Regular.ttf
+        - asset: fonts/poppins/Poppins-Bold.ttf
+          weight: 700
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "lib/assets/quizappicon.png"

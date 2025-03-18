@@ -1,21 +1,27 @@
-import 'pages/start_page.dart';
 import 'package:flutter/material.dart';
+import 'package:my_quiz_app/pages/start_page.dart';
 
 void main() {
-  runApp(const MyQuizApp());
+  runApp(const MyApp());
 }
 
-class MyQuizApp extends StatelessWidget {
-  const MyQuizApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      title: 'My Quiz App',
       theme: ThemeData(
-        primarySwatch: Colors.purple,
+        primarySwatch: Colors.deepPurple,
+        fontFamily: 'Poppins',
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(fontFamily: 'Poppins'),
+          bodyMedium: TextStyle(fontFamily: 'Poppins'),
+        ),
       ),
       home: const StartPage(),
+      debugShowCheckedModeBanner: false, // Remove debug banner
     );
   }
 }

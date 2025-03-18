@@ -6,9 +6,9 @@ class CategoryTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'Category',
+      'Select a Category',
       style: TextStyle(
-        fontSize: 30,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),

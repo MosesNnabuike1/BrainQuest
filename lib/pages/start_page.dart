@@ -49,12 +49,14 @@ class _StartPageState extends State<StartPage> {
                           color: Colors.black,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
                         children: <TextSpan>[
                           TextSpan(
                             text: ' App',
                             style: TextStyle(
                               color: Colors.orange,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                         ],
@@ -68,13 +70,14 @@ class _StartPageState extends State<StartPage> {
                   width: double.infinity,
                   child: TextField(
                     controller: _nameController,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                     decoration: InputDecoration(
                       labelText: 'Enter your name',
-                      labelStyle: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                       hintText: 'Moses Nnabuike',
                       hintStyle: const TextStyle(
                         color: Colors.grey,
+                        fontFamily: 'Poppins',
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -107,7 +110,7 @@ class _StartPageState extends State<StartPage> {
                                 milliseconds: 1000), // Animation duration
                             pageBuilder: (context, animation,
                                     secondaryAnimation) =>
-                                const CategoryPage(), // Navigate to CategoryPage
+                                CategoryPage(name: _nameController.text), // Pass name to CategoryPage
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               // Create opening-up animation
@@ -144,7 +147,7 @@ class _StartPageState extends State<StartPage> {
                     ),
                     child: const Text(
                       'Start',
-                      style: TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 18, fontFamily: 'Poppins'),
                     ),
                   ),
                 ),

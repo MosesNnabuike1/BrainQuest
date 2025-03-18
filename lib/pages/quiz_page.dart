@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:convert'; // For JSON decoding
 import 'package:http/http.dart' as http;
-import 'package:my_quiz_app/utils/dailog_utils.dart';
 import 'package:my_quiz_app/widgets/question_container.dart';
 import 'package:my_quiz_app/widgets/progress_circle.dart';
 import 'package:my_quiz_app/widgets/option_button.dart';
 import 'package:my_quiz_app/widgets/next_submit_button.dart';
+import 'package:my_quiz_app/pages/result_page.dart';
 
 class QuizPage extends StatefulWidget {
   final String category;
@@ -35,6 +35,8 @@ class _QuizPageState extends State<QuizPage>
   bool isFlicker = false;
 
   bool _areQuestionsFetched = false;
+  bool _isLoading = true;
+  bool _hasError = false;
 
   int correctAnswers = 0;
 
@@ -48,6 +50,7 @@ class _QuizPageState extends State<QuizPage>
         _areQuestionsFetched = true; // Update when questions are fetched
         _isOptionVisible = List<bool>.filled(
             questions[currentQuestionIndex]['options'].length, false);
+        _isLoading = false;
       });
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -73,6 +76,10 @@ class _QuizPageState extends State<QuizPage>
       });
     }).catchError((error) {
       print('Error fetching questions: $error');
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     });
   }
 
@@ -86,6 +93,12 @@ class _QuizPageState extends State<QuizPage>
       final data = jsonDecode(response.body);
 
       final results = data['results'] as List;
+      if (results.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
       return results.map((question) {
         return {
           'question': question['question'],
@@ -123,14 +136,18 @@ class _QuizPageState extends State<QuizPage>
 
   // Method to check if the selected answer is correct.
   void checkAnswer(String option) {
+    if (isAnswered) return; // Prevent multiple taps from recording the answer multiple times
+
     setState(() {
       selectedOption = option;
       isAnswered = true;
+      _isSubmitVisible = true; // Show the submit button after answering
     });
-    if (option != questions[currentQuestionIndex]['answer']) {
-      flickerWrongAnswer();
-    } else {
+    if (option == questions[currentQuestionIndex]['answer']) {
+      correctAnswers++; // Increment correct answers if the selected option is correct
       flickerCorrectAnswer();
+    } else {
+      flickerWrongAnswer();
     }
   }
 
@@ -139,25 +156,19 @@ class _QuizPageState extends State<QuizPage>
     void flicker() {
       if (flickerCount < 6) {
         setState(() {
-          // Alternate between red and blue for the wrong option.
-          selectedOptionColor =
-              (flickerCount % 2 == 0) ? Colors.red : Colors.blue;
+          // Alternate between red and transparent for the wrong option.
+          selectedOptionColor = (flickerCount % 2 == 0) ? Colors.red : Colors.blueAccent;
         });
         flickerCount++;
 
-        // Wait for 500ms before flickering again.
-        Future.delayed(const Duration(milliseconds: 500), flicker);
+        // Wait for 200ms before flickering again.
+        Future.delayed(const Duration(milliseconds: 100), flicker);
       } else {
         // After flickering, show the correct option in green.
         setState(() {
-          selectedOptionColor =
-              Colors.green; // Highlight correct answer in green.
-          selectedOption =
-              questions[currentQuestionIndex]['answer']; // Show correct answer.
+          selectedOptionColor = Colors.green; // Highlight correct answer in green.
+          selectedOption = questions[currentQuestionIndex]['answer']; // Show correct answer.
         });
-
-        // Wait 2 seconds before moving to the next question.
-        Future.delayed(const Duration(seconds: 2), goToNextQuestion);
       }
     }
 
@@ -168,15 +179,9 @@ class _QuizPageState extends State<QuizPage>
     setState(() {
       selectedOptionColor = Colors.green; // Highlight correct answer in green.
     });
-
-    // Wait 2 seconds before moving to the next question.
-    Future.delayed(const Duration(seconds: 2), goToNextQuestion);
   }
 
   void goToNextQuestion() {
-    if (selectedOption == questions[currentQuestionIndex]['answer']) {
-      correctAnswers++;
-    }
     if (currentQuestionIndex < questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
@@ -189,7 +194,15 @@ class _QuizPageState extends State<QuizPage>
         startNextQuestionAnimation();
       });
     } else {
-      showResultPage(context, correctAnswers, questions.length);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultPage(
+            correctAnswers: correctAnswers,
+            totalQuestions: questions.length,
+          ),
+        ),
+      );
     }
   }
 
@@ -217,6 +230,14 @@ class _QuizPageState extends State<QuizPage>
     });
   }
 
+  void showSelectOptionMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please select an option'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double progress =
@@ -236,122 +257,109 @@ class _QuizPageState extends State<QuizPage>
             style: const TextStyle(color: Colors.white)),
       ),
       backgroundColor: const Color.fromARGB(255, 64, 51, 90),
-      body: !_areQuestionsFetched
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : questions.isEmpty
-              ? const Center(child: Text('There is no question'))
-              : SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: 600,
-                        maxHeight: 800,
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Center(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  // Animated Question Container
-                                  AnimatedPositioned(
-                                    duration: const Duration(seconds: 1),
-                                    curve: Curves.easeInOut,
-                                    top: _questionReturn
-                                        ? 80
-                                        : (_isQuestionVisible ? 250 : 250),
-                                    left: 0,
-                                    right: 0,
-                                    child: Center(
-                                      child: QuestionContainer(
-                                        question:
-                                            questions[currentQuestionIndex]
-                                                ['question'],
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Animated Progress Circle
-                                  AnimatedPositioned(
-                                    duration: const Duration(seconds: 1),
-                                    curve: Curves.easeInOut,
-                                    top: _isProgressVisible ? 40 : -200,
-                                    left: 0,
-                                    right: 0,
-                                    child: Center(
-                                      child: ProgressCircle(progress: progress),
-                                    ),
-                                  ),
-
-                                  // Animated Options
-                                  for (int i = 0;
-                                      i <
-                                          questions[currentQuestionIndex]
-                                                  ['options']
-                                              .length;
-                                      i++)
+          : _hasError
+              ? const Center(child: Text('No questions found. Please try again later.', style: TextStyle(color: Colors.red, fontSize: 18)))
+              : !_areQuestionsFetched
+                  ? const Center(child: CircularProgressIndicator())
+                  : questions.isEmpty
+                      ? const Center(child: Text('There is no question'))
+                      : Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    // Animated Question Container
                                     AnimatedPositioned(
-                                      duration: Duration(
-                                          milliseconds: 100 + (i * 100)),
+                                      duration: const Duration(seconds: 1),
                                       curve: Curves.easeInOut,
-                                      top: _isOptionVisible[i]
-                                          ? 300 + (i * 80)
-                                          : 800,
+                                      top: _questionReturn
+                                          ? 60
+                                          : (_isQuestionVisible ? 200 : 200),
                                       left: 0,
                                       right: 0,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0),
-                                        child: OptionButton(
-                                          option:
-                                              questions[currentQuestionIndex]
-                                                  ['options'][i],
-                                          isSelected: selectedOption ==
-                                              questions[currentQuestionIndex]
-                                                  ['options'][i],
-                                          isCorrect: selectedOption ==
-                                              questions[currentQuestionIndex]
-                                                  ['answer'],
-                                          onTap: () => checkAnswer(
-                                              questions[currentQuestionIndex]
-                                                  ['options'][i]),
+                                      child: Center(
+                                        child: QuestionContainer(
+                                          question: questions[currentQuestionIndex]
+                                              ['question'],
                                         ),
                                       ),
                                     ),
 
-                                  // Next/Submit Button
-                                  if (_isSubmitVisible)
+                                    // Animated Progress Circle
                                     AnimatedPositioned(
-                                      duration:
-                                          const Duration(milliseconds: 100),
+                                      duration: const Duration(seconds: 1),
                                       curve: Curves.easeInOut,
-                                      bottom: 60,
+                                      top: _isProgressVisible ? 20 : -200,
                                       left: 0,
                                       right: 0,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0),
-                                        child: NextSubmitButton(
-                                          isLastQuestion:
-                                              currentQuestionIndex ==
-                                                  questions.length - 1,
-                                          onPressed: goToNextQuestion,
-                                        ),
+                                      child: Center(
+                                        child: ProgressCircle(progress: progress),
                                       ),
                                     ),
-                                ],
+
+                                    // Animated Options
+                                    for (int i = 0;
+                                        i <
+                                            questions[currentQuestionIndex]['options']
+                                                .length;
+                                        i++)
+                                      AnimatedPositioned(
+                                        duration:
+                                            Duration(milliseconds: 100 + (i * 100)),
+                                        curve: Curves.easeInOut,
+                                        top: _isOptionVisible[i] ? 260 + (i * 60) : 800,
+                                        left: 0,
+                                        right: 0,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.symmetric(vertical: 4.0),
+                                          child: OptionButton(
+                                            option: questions[currentQuestionIndex]
+                                                ['options'][i],
+                                            isSelected: selectedOption ==
+                                                questions[currentQuestionIndex]
+                                                    ['options'][i],
+                                            isCorrect: selectedOption ==
+                                                questions[currentQuestionIndex]
+                                                    ['answer'],
+                                            onTap: () => checkAnswer(
+                                                questions[currentQuestionIndex]
+                                                    ['options'][i]),
+                                            selectedOptionColor: selectedOptionColor, // Pass the selectedOptionColor
+                                          ),
+                                        ),
+                                      ),
+
+                                    // Next/Submit Button
+                                    if (_isSubmitVisible)
+                                      AnimatedPositioned(
+                                        duration: const Duration(milliseconds: 100),
+                                        curve: Curves.easeInOut,
+                                        bottom: 60,
+                                        left: 0,
+                                        right: 0,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.symmetric(vertical: 4.0),
+                                          child: NextSubmitButton(
+                                            isLastQuestion: currentQuestionIndex ==
+                                                questions.length - 1,
+                                            onPressed: selectedOption != null ? goToNextQuestion : showSelectOptionMessage, // Show message if no option is selected
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                          ],
+                        ),
     );
   }
 }
