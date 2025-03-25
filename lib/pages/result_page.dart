@@ -5,8 +5,11 @@ class ResultPage extends StatelessWidget {
   final int correctAnswers;
   final int totalQuestions;
 
-  const ResultPage(
-      {super.key, required this.correctAnswers, required this.totalQuestions});
+  const ResultPage({
+    super.key,
+    required this.correctAnswers,
+    required this.totalQuestions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +17,10 @@ class ResultPage extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(255, 64, 51, 90),
-        title:
-            const Text('Quiz Results', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Quiz Results',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       backgroundColor: const Color.fromARGB(255, 64, 51, 90),
       body: Center(
